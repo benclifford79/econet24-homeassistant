@@ -14,6 +14,7 @@ RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 # Copy application files
 COPY econet24_client.py .
 COPY econet24_mqtt_bridge.py .
+COPY generate_package.py .
 COPY run.sh /
 
 # Make run script executable
