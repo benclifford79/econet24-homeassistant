@@ -10,12 +10,11 @@ export MQTT_USERNAME=$(bashio::config 'mqtt_username')
 export MQTT_PASSWORD=$(bashio::config 'mqtt_password')
 export POLL_INTERVAL=$(bashio::config 'poll_interval')
 
-LOG_LEVEL=$(bashio::config 'log_level')
+# Get log level from config and convert to uppercase for Python
+LOG_LEVEL_CONFIG=$(bashio::config 'log_level')
 
-# Set Python log level
-case "${LOG_LEVEL}" in
+case "${LOG_LEVEL_CONFIG}" in
     debug)
-        export PYTHONUNBUFFERED=1
         export LOG_LEVEL="DEBUG"
         ;;
     warning)
@@ -29,9 +28,16 @@ case "${LOG_LEVEL}" in
         ;;
 esac
 
-bashio::log.info "Starting Econet24 MQTT Bridge..."
+# Ensure Python output is unbuffered (shows logs immediately)
+export PYTHONUNBUFFERED=1
+
+bashio::log.info "========================================"
+bashio::log.info "Econet24 MQTT Bridge Add-on"
+bashio::log.info "========================================"
+bashio::log.info "Log Level: ${LOG_LEVEL}"
 bashio::log.info "MQTT Host: ${MQTT_HOST}:${MQTT_PORT}"
 bashio::log.info "Poll Interval: ${POLL_INTERVAL} seconds"
+bashio::log.info "========================================"
 
 # Run the bridge
 cd /app

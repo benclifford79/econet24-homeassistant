@@ -11,14 +11,16 @@ Usage:
     data = client.get_current_params(device_uid)
 """
 
+import os
 import re
 import requests
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# Get log level from environment (set by bridge or run.sh)
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+logger = logging.getLogger("econet24_client")
 
 
 class Econet24Error(Exception):

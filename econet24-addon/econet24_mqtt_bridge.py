@@ -16,6 +16,7 @@ Environment variables:
     MQTT_USERNAME - MQTT username (optional)
     MQTT_PASSWORD - MQTT password (optional)
     POLL_INTERVAL - Seconds between polls (default: 60)
+    LOG_LEVEL - Logging level: DEBUG, INFO, WARNING, ERROR (default: INFO)
 """
 
 import os
@@ -30,11 +31,16 @@ import paho.mqtt.client as mqtt
 
 from econet24_client import Econet24Client, LoginError, Econet24Error
 
+# Configure logging based on environment
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=getattr(logging, log_level, logging.INFO),
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("econet24")
+
+# Also set level for the client module
+logging.getLogger("econet24_client").setLevel(getattr(logging, log_level, logging.INFO))
 
 # Sensor definitions with HA device classes and units
 SENSOR_DEFINITIONS = {
@@ -172,35 +178,65 @@ class Econet24MQTTBridge:
 
     def _setup_econet(self):
         """Initialize and login to econet24."""
+        logger.info("[ECONET] Connecting to econet24.com...")
         self.econet_client = Econet24Client()
-        logger.info("Logging into econet24.com...")
-        self.econet_client.login(self.econet_username, self.econet_password)
-        logger.info(f"Logged in. Devices: {self.econet_client.devices}")
+
+        try:
+            self.econet_client.login(self.econet_username, self.econet_password)
+            logger.info(f"[ECONET] Login successful!")
+            logger.info(f"[ECONET] Found {len(self.econet_client.devices)} device(s): {self.econet_client.devices}")
+        except LoginError as e:
+            logger.error(f"[ECONET] Login FAILED: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"[ECONET] Connection error: {e}")
+            raise
 
     def _setup_mqtt(self):
         """Initialize MQTT client."""
+        logger.info(f"[MQTT] Connecting to broker at {self.mqtt_host}:{self.mqtt_port}...")
         self.mqtt_client = mqtt.Client(client_id="econet24_bridge")
 
         if self.mqtt_username:
+            logger.debug(f"[MQTT] Using authentication (user: {self.mqtt_username})")
             self.mqtt_client.username_pw_set(self.mqtt_username, self.mqtt_password)
 
         self.mqtt_client.on_connect = self._on_mqtt_connect
         self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
+        self.mqtt_client.on_publish = self._on_mqtt_publish
 
-        logger.info(f"Connecting to MQTT broker at {self.mqtt_host}:{self.mqtt_port}")
-        self.mqtt_client.connect(self.mqtt_host, self.mqtt_port, 60)
-        self.mqtt_client.loop_start()
+        try:
+            self.mqtt_client.connect(self.mqtt_host, self.mqtt_port, 60)
+            self.mqtt_client.loop_start()
+        except Exception as e:
+            logger.error(f"[MQTT] Connection FAILED: {e}")
+            raise
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         """Handle MQTT connection."""
+        rc_codes = {
+            0: "Connection successful",
+            1: "Incorrect protocol version",
+            2: "Invalid client identifier",
+            3: "Server unavailable",
+            4: "Bad username or password",
+            5: "Not authorized",
+        }
         if rc == 0:
-            logger.info("Connected to MQTT broker")
+            logger.info("[MQTT] Connected to broker successfully!")
         else:
-            logger.error(f"MQTT connection failed with code {rc}")
+            logger.error(f"[MQTT] Connection FAILED: {rc_codes.get(rc, f'Unknown error code {rc}')}")
 
     def _on_mqtt_disconnect(self, client, userdata, rc):
         """Handle MQTT disconnection."""
-        logger.warning(f"Disconnected from MQTT broker (rc={rc})")
+        if rc == 0:
+            logger.info("[MQTT] Disconnected cleanly")
+        else:
+            logger.warning(f"[MQTT] Unexpected disconnection (rc={rc}), will auto-reconnect...")
+
+    def _on_mqtt_publish(self, client, userdata, mid):
+        """Handle MQTT publish confirmation."""
+        logger.debug(f"[MQTT] Message {mid} published")
 
     def _publish_ha_discovery(self, device_uid: str, sensor_key: str, sensor_def: dict):
         """Publish Home Assistant MQTT discovery config."""
@@ -234,12 +270,13 @@ class Econet24MQTTBridge:
 
         # Publish discovery config
         discovery_topic = f"{self.ha_discovery_prefix}/sensor/{unique_id}/config"
-        self.mqtt_client.publish(
+        result = self.mqtt_client.publish(
             discovery_topic,
             json.dumps(config),
             retain=True
         )
-        logger.debug(f"Published discovery for {sensor_key}")
+        logger.info(f"[MQTT] Registered new sensor: {sensor_def['name']} ({sensor_key})")
+        logger.debug(f"[MQTT] Discovery topic: {discovery_topic}")
         self._discovery_published.add(sensor_key)
 
     def _publish_sensor_value(self, device_uid: str, sensor_key: str, value: Any):
@@ -250,14 +287,28 @@ class Econet24MQTTBridge:
             payload = ""
         else:
             payload = str(value)
-        self.mqtt_client.publish(topic, payload, retain=True)
+        result = self.mqtt_client.publish(topic, payload, retain=True)
+        logger.debug(f"[MQTT] Published {sensor_key}={payload} to {topic}")
 
     def _poll_and_publish(self):
         """Poll econet24 and publish data to MQTT."""
         try:
             for device_uid in self.econet_client.devices:
-                logger.debug(f"Polling device {device_uid}")
+                logger.debug(f"[ECONET] Polling device {device_uid}...")
+
+                # Fetch data from econet24
                 params = self.econet_client.get_device_params(device_uid)
+                curr = params.get("curr", {})
+
+                # Count valid sensors (excluding 999.0 values)
+                valid_sensors = {k: v for k, v in curr.items() if v != 999.0}
+                logger.info(f"[ECONET] Received {len(valid_sensors)} sensor values from device {device_uid[:8]}")
+
+                # Log some key values at INFO level for quick diagnostics
+                key_sensors = ["GrantOutgoingTemp", "GrantReturnTemp", "TempCWU", "GrantCompressorFreq"]
+                key_values = {k: curr.get(k) for k in key_sensors if k in curr and curr.get(k) != 999.0}
+                if key_values:
+                    logger.info(f"[ECONET] Key readings: {key_values}")
 
                 # Publish WiFi info
                 for key in ["wifiQuality", "wifiStrength"]:
@@ -267,10 +318,11 @@ class Econet24MQTTBridge:
                         self._publish_sensor_value(device_uid, key, params[key])
 
                 # Publish current sensor values
-                curr = params.get("curr", {})
+                published_count = 0
                 for key, value in curr.items():
                     # Skip invalid/disconnected sensors (999.0)
                     if value == 999.0:
+                        logger.debug(f"[ECONET] Skipping {key} (value=999.0, sensor not connected)")
                         continue
 
                     # Publish discovery if we have a definition
@@ -287,21 +339,30 @@ class Econet24MQTTBridge:
                         self._publish_ha_discovery(device_uid, key, generic_def)
 
                     self._publish_sensor_value(device_uid, key, value)
+                    published_count += 1
 
-                logger.info(f"Published {len(curr)} sensors for device {device_uid}")
+                logger.info(f"[MQTT] Published {published_count} sensor values to MQTT")
 
         except Econet24Error as e:
-            logger.error(f"Econet24 error: {e}")
-            # Try to re-login
-            logger.info("Attempting re-login...")
+            logger.error(f"[ECONET] API error: {e}")
+            logger.info("[ECONET] Attempting re-login...")
             try:
                 self._setup_econet()
+                logger.info("[ECONET] Re-login successful")
             except Exception as re_e:
-                logger.error(f"Re-login failed: {re_e}")
+                logger.error(f"[ECONET] Re-login FAILED: {re_e}")
+
+        except Exception as e:
+            logger.error(f"[POLL] Unexpected error: {e}", exc_info=True)
 
     def run(self):
         """Main loop."""
         self.running = True
+
+        logger.info("=" * 50)
+        logger.info("Econet24 MQTT Bridge starting...")
+        logger.info(f"Log level: {log_level}")
+        logger.info("=" * 50)
 
         # Setup connections
         self._setup_econet()
@@ -310,24 +371,32 @@ class Econet24MQTTBridge:
         # Give MQTT time to connect
         time.sleep(2)
 
-        logger.info(f"Starting polling loop (interval: {self.poll_interval}s)")
+        logger.info("=" * 50)
+        logger.info(f"[POLL] Starting polling loop (interval: {self.poll_interval}s)")
+        logger.info("=" * 50)
 
+        poll_count = 0
         while self.running:
+            poll_count += 1
+            logger.debug(f"[POLL] Poll cycle #{poll_count}")
+
             try:
                 self._poll_and_publish()
             except Exception as e:
-                logger.error(f"Error in poll loop: {e}")
+                logger.error(f"[POLL] Error in poll loop: {e}", exc_info=True)
 
             # Sleep in small increments to allow clean shutdown
+            logger.debug(f"[POLL] Sleeping for {self.poll_interval}s until next poll...")
             for _ in range(self.poll_interval):
                 if not self.running:
                     break
                 time.sleep(1)
 
-        logger.info("Shutting down...")
+        logger.info("[SHUTDOWN] Shutting down...")
         if self.mqtt_client:
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
+        logger.info("[SHUTDOWN] Goodbye!")
 
     def stop(self):
         """Stop the bridge."""
