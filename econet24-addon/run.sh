@@ -10,6 +10,7 @@ export MQTT_USERNAME=$(bashio::config 'mqtt_username')
 export MQTT_PASSWORD=$(bashio::config 'mqtt_password')
 export POLL_INTERVAL=$(bashio::config 'poll_interval')
 export DEVICE_NAME=$(bashio::config 'device_name')
+export GENERATE_PACKAGE=$(bashio::config 'generate_package')
 
 # Get log level from config and convert to uppercase for Python
 LOG_LEVEL_CONFIG=$(bashio::config 'log_level')
@@ -40,6 +41,12 @@ bashio::log.info "MQTT Host: ${MQTT_HOST}:${MQTT_PORT}"
 bashio::log.info "Poll Interval: ${POLL_INTERVAL} seconds"
 bashio::log.info "========================================"
 
-# Run the bridge
+# Generate HA package if enabled
 cd /app
+if bashio::config.true 'generate_package'; then
+    bashio::log.info "Generating Home Assistant package..."
+    python3 generate_package.py
+fi
+
+# Run the bridge
 exec python3 -u econet24_mqtt_bridge.py
