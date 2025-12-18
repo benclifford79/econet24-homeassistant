@@ -1,0 +1,35 @@
+name: "Econet24 MQTT Bridge"
+description: "Bridge between econet24.com (Plum ecoMAX) and Home Assistant via MQTT"
+version: "1.0.0"
+slug: "econet24_mqtt_bridge"
+init: false
+arch:
+  - amd64
+  - aarch64
+  - armv7
+  - armhf
+  - i386
+startup: services
+boot: auto
+options:
+  econet24_username: ""
+  econet24_password: ""
+  mqtt_host: "core-mosquitto"
+  mqtt_port: 1883
+  mqtt_username: ""
+  mqtt_password: ""
+  poll_interval: 60
+  log_level: "info"
+schema:
+  econet24_username: str
+  econet24_password: password
+  mqtt_host: str
+  mqtt_port: port
+  mqtt_username: str?
+  mqtt_password: password?
+  poll_interval: int(10,3600)
+  log_level: list(debug|info|warning|error)
+services:
+  - mqtt:need
+map:
+  - config:rw
