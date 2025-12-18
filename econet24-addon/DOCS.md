@@ -61,20 +61,30 @@ The following sensors are automatically discovered in Home Assistant:
 - WiFi Quality
 - WiFi Signal Strength
 
-## Dashboard Package (Auto-Generated)
+## Auto-Generated Files
 
-When `generate_package` is enabled (default), the add-on automatically creates a Home Assistant package with proxy sensors. This gives you friendly sensor names for dashboards:
+When `generate_package` is enabled (default), the add-on automatically creates:
+
+| File | Description |
+|------|-------------|
+| `/config/packages/econet24_package.yaml` | Template sensors with friendly names |
+| `/config/www/econet24_heat_pump.svg` | Visual diagram for dashboard card |
+| `/config/www/econet24_card.yaml` | Ready-to-paste card configuration |
+
+### Proxy Sensors Created
 
 - `sensor.heat_pump_flow_temperature`
 - `sensor.heat_pump_return_temperature`
-- `sensor.heat_pump_status`
+- `sensor.heat_pump_outdoor_temperature`
+- `sensor.heat_pump_status` (with friendly text: Off, Heating, etc.)
 - `sensor.heat_pump_delta_t` (calculated)
+- `sensor.heat_pump_compressor_frequency`
 - `binary_sensor.compressor_running`
 - And more...
 
 ### Setup
 
-1. Set `device_name` in the add-on configuration (e.g., "Grant" or "Heat Pump")
+1. Set `device_name` in the add-on configuration (e.g., "Grant")
 
 2. Enable packages in your `configuration.yaml` (one-time):
    ```yaml
@@ -82,19 +92,19 @@ When `generate_package` is enabled (default), the add-on automatically creates a
      packages: !include_dir_named packages
    ```
 
-3. Restart the add-on - it will generate `/config/packages/econet24_heat_pump.yaml`
+3. Restart the add-on - files will be generated automatically
 
 4. Restart Home Assistant to load the package
 
-5. Use the proxy sensors in your dashboards!
-
-### Example Dashboard Cards
-
-See `homeassistant/lovelace/econet24_cards.yaml` in the repository for ready-to-use dashboard cards.
+5. Add the visual card to your dashboard:
+   - Edit Dashboard > Add Card > **Manual**
+   - Open `/config/www/econet24_card.yaml` in File Editor
+   - Copy everything below `# ---- COPY FROM HERE ----`
+   - Paste into the card editor
 
 ### Manual Installation
 
-If you prefer to manage the package manually, set `generate_package: false` and copy the package file from `homeassistant/packages/econet24_heat_pump.yaml` in the repository.
+Set `generate_package: false` to disable auto-generation and manage files manually.
 
 ## Support
 
