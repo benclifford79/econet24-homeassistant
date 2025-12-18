@@ -1,0 +1,155 @@
+# =============================================================================
+# Heat Pump Picture Elements Card
+# =============================================================================
+#
+# A visual diagram card showing heat pump status and temperatures.
+#
+# INSTALLATION:
+# 1. Copy heat_pump_diagram.svg to /config/www/
+# 2. Add this card to your dashboard (Manual Card or Raw Config Editor)
+# 3. Clear browser cache if image doesn't appear
+#
+# =============================================================================
+
+type: picture-elements
+image: /local/heat_pump_diagram.svg
+elements:
+  # ---------------------------------------------------------------------------
+  # Outdoor Temperature (top center)
+  # ---------------------------------------------------------------------------
+  - type: state-label
+    entity: sensor.heat_pump_outdoor_temperature
+    style:
+      top: 11%
+      left: 67%
+      color: white
+      font-size: 14px
+      font-weight: bold
+      text-shadow: 1px 1px 2px black
+
+  # ---------------------------------------------------------------------------
+  # Flow Temperature (right side, red pipe)
+  # ---------------------------------------------------------------------------
+  - type: state-label
+    entity: sensor.heat_pump_flow_temperature
+    style:
+      top: 34%
+      left: 82%
+      color: "#ff6b6b"
+      font-size: 13px
+      font-weight: bold
+
+  # ---------------------------------------------------------------------------
+  # Return Temperature (right side, blue pipe)
+  # ---------------------------------------------------------------------------
+  - type: state-label
+    entity: sensor.heat_pump_return_temperature
+    style:
+      top: 74%
+      left: 82%
+      color: "#4dabf7"
+      font-size: 13px
+      font-weight: bold
+
+  # ---------------------------------------------------------------------------
+  # Delta T (between pipes)
+  # ---------------------------------------------------------------------------
+  - type: state-label
+    entity: sensor.heat_pump_delta_t
+    style:
+      top: 53%
+      left: 80%
+      color: "#ffd43b"
+      font-size: 11px
+
+  # ---------------------------------------------------------------------------
+  # Compressor Frequency (on heat pump unit)
+  # ---------------------------------------------------------------------------
+  - type: state-label
+    entity: sensor.heat_pump_compressor_frequency
+    suffix: " Hz"
+    style:
+      top: 56%
+      left: 42%
+      color: "#4dabf7"
+      font-size: 10px
+
+  # ---------------------------------------------------------------------------
+  # Pump Speed (on heat pump unit)
+  # ---------------------------------------------------------------------------
+  - type: state-label
+    entity: sensor.heat_pump_pump_speed
+    suffix: " rpm"
+    style:
+      top: 56%
+      left: 30%
+      color: "#4dabf7"
+      font-size: 10px
+
+  # ---------------------------------------------------------------------------
+  # Status (bottom of unit)
+  # ---------------------------------------------------------------------------
+  - type: state-label
+    entity: sensor.heat_pump_status
+    style:
+      top: 56%
+      left: 54%
+      color: "#51cf66"
+      font-size: 10px
+
+  # ---------------------------------------------------------------------------
+  # Status Icon (changes color based on state)
+  # ---------------------------------------------------------------------------
+  - type: state-icon
+    entity: binary_sensor.heat_pump_running
+    style:
+      top: 42%
+      left: 10%
+      "--paper-item-icon-color": >
+        [[[ if (entity.state === 'on') return '#51cf66'; return '#868e96'; ]]]
+    tap_action:
+      action: more-info
+
+  # ---------------------------------------------------------------------------
+  # Compressor Running Icon
+  # ---------------------------------------------------------------------------
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.compressor_running
+        state: "on"
+    elements:
+      - type: icon
+        icon: mdi:fan
+        style:
+          top: 42%
+          left: 35%
+          color: "#4dabf7"
+          animation: spin 1s linear infinite
+          font-size: 20px
+
+  # ---------------------------------------------------------------------------
+  # Weather Icon (top)
+  # ---------------------------------------------------------------------------
+  - type: icon
+    icon: mdi:weather-partly-cloudy
+    style:
+      top: 11%
+      left: 48%
+      color: "#4dabf7"
+      font-size: 18px
+    tap_action:
+      action: more-info
+      entity: sensor.heat_pump_outdoor_temperature
+
+# =============================================================================
+# Alternative: Card with card-mod for animated fan
+# =============================================================================
+# If you have card-mod installed (HACS), you can add this to make the fan
+# spin when the compressor is running:
+#
+# card_mod:
+#   style: |
+#     @keyframes spin {
+#       from { transform: rotate(0deg); }
+#       to { transform: rotate(360deg); }
+#     }
