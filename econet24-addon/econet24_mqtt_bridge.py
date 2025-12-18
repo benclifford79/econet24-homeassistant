@@ -130,6 +130,149 @@ SENSOR_DEFINITIONS = {
         "unit": "°C",
         "icon": "mdi:thermometer-auto"
     },
+    # Flow rate
+    "Flow": {
+        "name": "Current Flow Rate",
+        "device_class": None,
+        "unit": "L/min",
+        "icon": "mdi:water-pump"
+    },
+    "WaterFlow": {
+        "name": "Water Flow Rate",
+        "device_class": None,
+        "unit": "L/min",
+        "icon": "mdi:water-pump"
+    },
+    "GrantFlow": {
+        "name": "Heat Pump Flow Rate",
+        "device_class": None,
+        "unit": "L/min",
+        "icon": "mdi:water-pump"
+    },
+    # Setpoints / Calculated temperatures
+    "Circuit1SetTemp": {
+        "name": "Circuit 1 Setpoint",
+        "device_class": "temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer-check"
+    },
+    "Circuit2SetTemp": {
+        "name": "Circuit 2 Setpoint",
+        "device_class": "temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer-check"
+    },
+    "C1CalcTemp": {
+        "name": "Circuit 1 Calculated Setpoint",
+        "device_class": "temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer-auto"
+    },
+    "C2CalcTemp": {
+        "name": "Circuit 2 Calculated Setpoint",
+        "device_class": "temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer-auto"
+    },
+    "TempSetCircuit1": {
+        "name": "Circuit 1 Target Temperature",
+        "device_class": "temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer-check"
+    },
+    "TempSetCircuit2": {
+        "name": "Circuit 2 Target Temperature",
+        "device_class": "temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer-check"
+    },
+    "CalcTempCircuit1": {
+        "name": "Circuit 1 Calculated Temperature",
+        "device_class": "temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer-auto"
+    },
+    "CalcTempCircuit2": {
+        "name": "Circuit 2 Calculated Temperature",
+        "device_class": "temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer-auto"
+    },
+    # Power / Energy
+    "Power": {
+        "name": "Current Power",
+        "device_class": "power",
+        "unit": "W",
+        "icon": "mdi:flash"
+    },
+    "ElecPower": {
+        "name": "Electrical Power",
+        "device_class": "power",
+        "unit": "W",
+        "icon": "mdi:flash"
+    },
+    "CurrentPower": {
+        "name": "Current Power Usage",
+        "device_class": "power",
+        "unit": "W",
+        "icon": "mdi:flash"
+    },
+    "GrantPower": {
+        "name": "Heat Pump Power",
+        "device_class": "power",
+        "unit": "W",
+        "icon": "mdi:flash"
+    },
+    "EnergyTotal": {
+        "name": "Total Energy",
+        "device_class": "energy",
+        "unit": "kWh",
+        "icon": "mdi:lightning-bolt"
+    },
+    "EnergyToday": {
+        "name": "Energy Today",
+        "device_class": "energy",
+        "unit": "kWh",
+        "icon": "mdi:lightning-bolt"
+    },
+    # Heat demand
+    "HeatDemand": {
+        "name": "Heat Demand",
+        "device_class": None,
+        "unit": "%",
+        "icon": "mdi:fire"
+    },
+    "Demand": {
+        "name": "Heating Demand",
+        "device_class": None,
+        "unit": "%",
+        "icon": "mdi:fire"
+    },
+    "DemandForHeat": {
+        "name": "Demand for Heat",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:fire"
+    },
+    "HeatingDemand": {
+        "name": "Heating Demand",
+        "device_class": None,
+        "unit": "%",
+        "icon": "mdi:fire"
+    },
+    # Pressure
+    "Pressure": {
+        "name": "System Pressure",
+        "device_class": "pressure",
+        "unit": "bar",
+        "icon": "mdi:gauge"
+    },
+    "WaterPressure": {
+        "name": "Water Pressure",
+        "device_class": "pressure",
+        "unit": "bar",
+        "icon": "mdi:gauge"
+    },
     # WiFi
     "wifiQuality": {
         "name": "WiFi Quality",
