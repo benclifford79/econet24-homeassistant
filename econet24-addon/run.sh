@@ -9,6 +9,7 @@ export MQTT_PORT=$(bashio::config 'mqtt_port')
 export MQTT_USERNAME=$(bashio::config 'mqtt_username')
 export MQTT_PASSWORD=$(bashio::config 'mqtt_password')
 export POLL_INTERVAL=$(bashio::config 'poll_interval')
+export DEVICE_NAME=$(bashio::config 'device_name')
 
 # Get log level from config and convert to uppercase for Python
 LOG_LEVEL_CONFIG=$(bashio::config 'log_level')

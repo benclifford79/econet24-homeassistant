@@ -1,6 +1,6 @@
 name: "Econet24 MQTT Bridge"
 description: "Bridge between econet24.com (Plum ecoMAX) and Home Assistant via MQTT"
-version: "1.1.0"
+version: "1.2.0"
 slug: "econet24_mqtt_bridge"
 init: false
 arch:
@@ -20,6 +20,7 @@ options:
   mqtt_password: ""
   poll_interval: 60
   log_level: "info"
+  device_name: ""
 schema:
   econet24_username: str
   econet24_password: password
@@ -29,6 +30,7 @@ schema:
   mqtt_password: password?
   poll_interval: int(10,3600)
   log_level: list(debug|info|warning|error)
+  device_name: str?
 services:
   - mqtt:need
 map:

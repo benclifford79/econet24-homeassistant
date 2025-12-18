@@ -146,6 +146,15 @@ SENSOR_DEFINITIONS = {
 }
 
 
+def slugify(text: str) -> str:
+    """Convert text to a slug suitable for entity IDs."""
+    import re
+    text = text.lower().strip()
+    text = re.sub(r'[^a-z0-9]+', '_', text)
+    text = re.sub(r'_+', '_', text)
+    return text.strip('_')
+
+
 class Econet24MQTTBridge:
     """Bridge between econet24.com and MQTT for Home Assistant."""
 
@@ -160,6 +169,7 @@ class Econet24MQTTBridge:
         poll_interval: int = 60,
         ha_discovery_prefix: str = "homeassistant",
         topic_prefix: str = "econet24",
+        device_name: str = None,
     ):
         self.econet_username = econet_username
         self.econet_password = econet_password
@@ -170,11 +180,33 @@ class Econet24MQTTBridge:
         self.poll_interval = poll_interval
         self.ha_discovery_prefix = ha_discovery_prefix
         self.topic_prefix = topic_prefix
+        self.device_name = device_name  # Custom device name for friendly entity IDs
 
         self.econet_client = None
         self.mqtt_client = None
         self.running = False
         self._discovery_published = set()
+        self._device_name_map = {}  # Maps device UID to friendly name
+
+    def _get_device_slug(self, device_uid: str) -> str:
+        """Get a friendly slug for the device (for entity IDs)."""
+        if device_uid in self._device_name_map:
+            return self._device_name_map[device_uid]
+
+        # Use custom device name if provided, otherwise use first 8 chars of UID
+        if self.device_name:
+            slug = slugify(self.device_name)
+        else:
+            slug = device_uid[:8].lower()
+
+        self._device_name_map[device_uid] = slug
+        return slug
+
+    def _get_device_display_name(self, device_uid: str) -> str:
+        """Get a friendly display name for the device."""
+        if self.device_name:
+            return self.device_name
+        return f"Econet24 {device_uid[:8]}"
 
     def _setup_econet(self):
         """Initialize and login to econet24."""
@@ -243,16 +275,22 @@ class Econet24MQTTBridge:
         if sensor_key in self._discovery_published:
             return
 
-        unique_id = f"econet24_{device_uid}_{sensor_key}"
+        device_slug = self._get_device_slug(device_uid)
+        device_display_name = self._get_device_display_name(device_uid)
+        sensor_slug = slugify(sensor_def["name"])
+
+        # Use friendly names for entity IDs: econet24_heatpump_flow_temperature
+        unique_id = f"econet24_{device_slug}_{sensor_slug}"
         state_topic = f"{self.topic_prefix}/{device_uid}/{sensor_key}"
 
         config = {
             "name": sensor_def["name"],
             "unique_id": unique_id,
+            "object_id": f"econet24_{device_slug}_{sensor_slug}",  # Controls entity_id
             "state_topic": state_topic,
             "device": {
                 "identifiers": [f"econet24_{device_uid}"],
-                "name": f"Econet24 {device_uid[:8]}",
+                "name": device_display_name,
                 "manufacturer": "Plum",
                 "model": "ecoMAX360i",
                 "via_device": "econet24_bridge",
@@ -275,7 +313,7 @@ class Econet24MQTTBridge:
             json.dumps(config),
             retain=True
         )
-        logger.info(f"[MQTT] Registered new sensor: {sensor_def['name']} ({sensor_key})")
+        logger.info(f"[MQTT] Registered new sensor: {sensor_def['name']} -> sensor.{unique_id}")
         logger.debug(f"[MQTT] Discovery topic: {discovery_topic}")
         self._discovery_published.add(sensor_key)
 
@@ -362,6 +400,8 @@ class Econet24MQTTBridge:
         logger.info("=" * 50)
         logger.info("Econet24 MQTT Bridge starting...")
         logger.info(f"Log level: {log_level}")
+        if self.device_name:
+            logger.info(f"Device name: {self.device_name}")
         logger.info("=" * 50)
 
         # Setup connections
@@ -413,6 +453,7 @@ def main():
     mqtt_username = os.environ.get("MQTT_USERNAME")
     mqtt_password = os.environ.get("MQTT_PASSWORD")
     poll_interval = int(os.environ.get("POLL_INTERVAL", "60"))
+    device_name = os.environ.get("DEVICE_NAME", "").strip() or None
 
     if not econet_username or not econet_password:
         print("Error: ECONET24_USERNAME and ECONET24_PASSWORD must be set")
@@ -420,6 +461,7 @@ def main():
         print("  export ECONET24_USERNAME='your_email@example.com'")
         print("  export ECONET24_PASSWORD='your_password'")
         print("  export MQTT_HOST='localhost'  # optional")
+        print("  export DEVICE_NAME='Heat Pump'  # optional, for friendly entity IDs")
         print("  python econet24_mqtt_bridge.py")
         sys.exit(1)
 
@@ -431,6 +473,7 @@ def main():
         mqtt_username=mqtt_username,
         mqtt_password=mqtt_password,
         poll_interval=poll_interval,
+        device_name=device_name,
     )
 
     # Handle shutdown signals
