@@ -1,0 +1,208 @@
+# =============================================================================
+# Econet24 Heat Pump Dashboard Cards
+# =============================================================================
+#
+# These cards use the proxy sensors from the econet24_heat_pump.yaml package.
+# Copy and paste these into your dashboard (Edit Dashboard -> Raw Config Editor
+# or use the Manual Card option).
+#
+# Prerequisites:
+# 1. Install the Econet24 MQTT Bridge add-on
+# 2. Install the econet24_heat_pump.yaml package
+# 3. Set your device prefix in input_text.econet24_device_prefix
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Heat Pump Overview Card - Gauges + Status
+# -----------------------------------------------------------------------------
+# A comprehensive card showing temperatures and status at a glance
+
+type: vertical-stack
+cards:
+  - type: horizontal-stack
+    cards:
+      - type: gauge
+        entity: sensor.heat_pump_flow_temperature
+        name: Flow
+        min: 15
+        max: 55
+        needle: true
+        segments:
+          - from: 15
+            color: '#4dabf7'
+          - from: 30
+            color: '#51cf66'
+          - from: 45
+            color: '#ff6b6b'
+      - type: gauge
+        entity: sensor.heat_pump_return_temperature
+        name: Return
+        min: 15
+        max: 55
+        needle: true
+        segments:
+          - from: 15
+            color: '#4dabf7'
+          - from: 25
+            color: '#51cf66'
+          - from: 40
+            color: '#ff6b6b'
+  - type: entities
+    entities:
+      - entity: sensor.heat_pump_status
+        name: Status
+      - entity: binary_sensor.compressor_running
+        name: Compressor
+      - entity: sensor.heat_pump_compressor_frequency
+        name: Frequency
+      - entity: sensor.heat_pump_delta_t
+        name: Delta T
+      - entity: sensor.heat_pump_outdoor_temperature
+        name: Outdoor
+
+---
+# -----------------------------------------------------------------------------
+# Heat Pump Compact Card - Glance style
+# -----------------------------------------------------------------------------
+
+type: glance
+title: Heat Pump
+show_state: true
+entities:
+  - entity: sensor.heat_pump_status
+    name: Status
+  - entity: sensor.heat_pump_flow_temperature
+    name: Flow
+  - entity: sensor.heat_pump_return_temperature
+    name: Return
+  - entity: sensor.heat_pump_outdoor_temperature
+    name: Outside
+  - entity: binary_sensor.compressor_running
+    name: Compressor
+
+---
+# -----------------------------------------------------------------------------
+# All Temperatures Card
+# -----------------------------------------------------------------------------
+
+type: entities
+title: Temperatures
+icon: mdi:thermometer
+entities:
+  - type: section
+    label: Heat Pump
+  - entity: sensor.heat_pump_flow_temperature
+    name: Flow
+  - entity: sensor.heat_pump_return_temperature
+    name: Return
+  - entity: sensor.heat_pump_delta_t
+    name: Delta T (Flow - Return)
+  - type: section
+    label: Hot Water & Storage
+  - entity: sensor.hot_water_temperature
+    name: Hot Water (DHW)
+  - entity: sensor.buffer_tank_temperature
+    name: Buffer Tank
+  - type: section
+    label: Heating Circuits
+  - entity: sensor.circuit_2_temperature
+    name: Circuit 2
+  - entity: sensor.circuit_3_temperature
+    name: Circuit 3
+  - type: section
+    label: Outdoor
+  - entity: sensor.heat_pump_outdoor_temperature
+    name: Heat Pump Sensor
+  - entity: sensor.weather_temperature
+    name: Weather Station
+
+---
+# -----------------------------------------------------------------------------
+# Hot Water Card with Gauge
+# -----------------------------------------------------------------------------
+
+type: vertical-stack
+cards:
+  - type: gauge
+    entity: sensor.hot_water_temperature
+    name: Hot Water
+    min: 10
+    max: 60
+    needle: true
+    segments:
+      - from: 10
+        color: '#4dabf7'
+      - from: 35
+        color: '#ffd43b'
+      - from: 45
+        color: '#51cf66'
+      - from: 55
+        color: '#ff6b6b'
+
+---
+# -----------------------------------------------------------------------------
+# System Status Card
+# -----------------------------------------------------------------------------
+
+type: entities
+title: System Status
+icon: mdi:heat-pump
+entities:
+  - entity: sensor.heat_pump_status
+    name: Operating Mode
+  - entity: binary_sensor.heat_pump_running
+    name: Heat Pump Active
+  - entity: binary_sensor.compressor_running
+    name: Compressor Active
+  - entity: sensor.heat_pump_compressor_frequency
+    name: Compressor Frequency
+  - entity: sensor.heat_pump_pump_speed
+    name: Pump Speed
+  - type: divider
+  - entity: sensor.econet24_wifi_quality
+    name: WiFi Quality
+
+---
+# -----------------------------------------------------------------------------
+# Mini Graph Card (requires HACS: mini-graph-card)
+# -----------------------------------------------------------------------------
+# Shows temperature history over time
+
+type: custom:mini-graph-card
+name: Heat Pump Temperatures (24h)
+hours_to_show: 24
+points_per_hour: 4
+line_width: 2
+entities:
+  - entity: sensor.heat_pump_flow_temperature
+    name: Flow
+    color: '#ff6b6b'
+  - entity: sensor.heat_pump_return_temperature
+    name: Return
+    color: '#4dabf7'
+  - entity: sensor.hot_water_temperature
+    name: Hot Water
+    color: '#ffd43b'
+show:
+  labels: true
+  points: false
+  legend: true
+
+---
+# -----------------------------------------------------------------------------
+# Conditional Card - Show warning when Delta T is too high
+# -----------------------------------------------------------------------------
+
+type: conditional
+conditions:
+  - condition: numeric_state
+    entity: sensor.heat_pump_delta_t
+    above: 8
+card:
+  type: markdown
+  content: |
+    ## ⚠️ High Delta T Warning
+    Flow/Return difference is **{{ states('sensor.heat_pump_delta_t') }}°C**
+
+    This may indicate low flow rate or system issues.

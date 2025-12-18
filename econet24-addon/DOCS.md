@@ -27,6 +27,16 @@ This add-on bridges your Plum ecoMAX/Grant heat pump data from econet24.com to H
 | `mqtt_password` | MQTT password (optional) |
 | `poll_interval` | Seconds between data fetches (default: `60`) |
 | `log_level` | Logging verbosity: debug, info, warning, error |
+| `device_name` | Custom device name for friendly entity IDs (optional) |
+
+### Device Name
+
+Setting `device_name` gives you predictable, friendly entity IDs:
+
+- **Without device_name**: `sensor.econet24_0fsecpma_heat_pump_flow_temperature`
+- **With device_name: "Grant"**: `sensor.econet24_grant_heat_pump_flow_temperature`
+
+This makes it easier to share dashboard configurations with other users.
 
 ## Sensors
 
@@ -50,6 +60,29 @@ The following sensors are automatically discovered in Home Assistant:
 - WiFi Quality
 - WiFi Signal Strength
 
+## Dashboard Package
+
+For ready-to-use dashboard cards and proxy sensors, see the `homeassistant/` folder in the repository:
+
+- `packages/econet24_heat_pump.yaml` - Template sensors with friendly names
+- `lovelace/econet24_cards.yaml` - Example dashboard cards
+
+### Installing the Package
+
+1. Enable packages in your `configuration.yaml`:
+   ```yaml
+   homeassistant:
+     packages: !include_dir_named packages
+   ```
+
+2. Copy `econet24_heat_pump.yaml` to your `/config/packages/` directory
+
+3. Edit the file and set your device prefix in `input_text.econet24_device_prefix`
+
+4. Restart Home Assistant
+
+5. Use the proxy sensors in your dashboards (e.g., `sensor.heat_pump_flow_temperature`)
+
 ## Support
 
-Report issues at: https://github.com/YOUR_USERNAME/econet-scraper/issues
+Report issues at: https://github.com/benclifford79/econet24-homeassistant/issues

@@ -1,0 +1,266 @@
+# =============================================================================
+# Econet24 Heat Pump Package for Home Assistant
+# =============================================================================
+#
+# This package creates proxy sensors and dashboard cards for your Econet24
+# heat pump integration. It allows you to share dashboard configurations
+# without hardcoding device-specific entity IDs.
+#
+# INSTALLATION:
+# 1. Enable packages in configuration.yaml:
+#    homeassistant:
+#      packages: !include_dir_named packages
+#
+# 2. Copy this file to your /config/packages/ directory
+#
+# 3. Set your device prefix below (must match your add-on's device_name setting)
+#
+# 4. Restart Home Assistant
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CONFIGURATION - Set your device prefix here
+# -----------------------------------------------------------------------------
+# This should match the 'device_name' you set in the Econet24 add-on config.
+# Examples: "grant", "heat_pump", "boiler"
+# If you didn't set a device_name, use the first 8 characters of your device UID
+# (visible in entity IDs like sensor.econet24_XXXXXXXX_...)
+
+input_text:
+  econet24_device_prefix:
+    name: Econet24 Device Prefix
+    icon: mdi:identifier
+    initial: "0fsecpma"  # <-- CHANGE THIS to your device prefix
+
+# -----------------------------------------------------------------------------
+# TEMPLATE SENSORS - Proxy sensors with friendly names
+# -----------------------------------------------------------------------------
+# These sensors reference your actual Econet24 entities dynamically.
+# Use these in your dashboards for portability.
+
+template:
+  # ---------------------------------------------------------------------------
+  # Heat Pump Core Sensors
+  # ---------------------------------------------------------------------------
+  - sensor:
+      - name: "Heat Pump Flow Temperature"
+        unique_id: econet24_proxy_flow_temp
+        icon: mdi:thermometer
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_heat_pump_flow_temperature') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_heat_pump_flow_temperature') not in ['unknown', 'unavailable'] }}
+
+      - name: "Heat Pump Return Temperature"
+        unique_id: econet24_proxy_return_temp
+        icon: mdi:thermometer
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_heat_pump_return_temperature') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_heat_pump_return_temperature') not in ['unknown', 'unavailable'] }}
+
+      - name: "Heat Pump Outdoor Temperature"
+        unique_id: econet24_proxy_outdoor_temp
+        icon: mdi:thermometer
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_heat_pump_outdoor_temperature') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_heat_pump_outdoor_temperature') not in ['unknown', 'unavailable'] }}
+
+      - name: "Heat Pump Compressor Frequency"
+        unique_id: econet24_proxy_compressor_freq
+        icon: mdi:sine-wave
+        unit_of_measurement: "Hz"
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_compressor_frequency') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_compressor_frequency') not in ['unknown', 'unavailable'] }}
+
+      - name: "Heat Pump Pump Speed"
+        unique_id: econet24_proxy_pump_speed
+        icon: mdi:pump
+        unit_of_measurement: "RPM"
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_pump_speed') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_pump_speed') not in ['unknown', 'unavailable'] }}
+
+      # Work State with friendly text
+      - name: "Heat Pump Status"
+        unique_id: econet24_proxy_status
+        icon: mdi:heat-pump
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {% set state = states('sensor.econet24_' ~ prefix ~ '_heat_pump_work_state') | int(-1) %}
+          {% set modes = {
+            0: 'Off',
+            1: 'Running',
+            2: 'Heating',
+            3: 'Hot Water',
+            4: 'Defrost',
+            5: 'Standby',
+            6: 'Cooling',
+            7: 'Error'
+          } %}
+          {{ modes.get(state, 'Unknown (' ~ state ~ ')') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_heat_pump_work_state') not in ['unknown', 'unavailable'] }}
+
+  # ---------------------------------------------------------------------------
+  # Hot Water & Buffer Tank
+  # ---------------------------------------------------------------------------
+      - name: "Hot Water Temperature"
+        unique_id: econet24_proxy_hot_water_temp
+        icon: mdi:water-boiler
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_hot_water_temperature') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_hot_water_temperature') not in ['unknown', 'unavailable'] }}
+
+      - name: "Buffer Tank Temperature"
+        unique_id: econet24_proxy_buffer_temp
+        icon: mdi:storage-tank
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_buffer_tank_bottom_temperature') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_buffer_tank_bottom_temperature') not in ['unknown', 'unavailable'] }}
+
+  # ---------------------------------------------------------------------------
+  # Weather & Outdoor
+  # ---------------------------------------------------------------------------
+      - name: "Weather Temperature"
+        unique_id: econet24_proxy_weather_temp
+        icon: mdi:weather-partly-cloudy
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_weather_temperature') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_weather_temperature') not in ['unknown', 'unavailable'] }}
+
+  # ---------------------------------------------------------------------------
+  # Heating Circuits
+  # ---------------------------------------------------------------------------
+      - name: "Circuit 2 Temperature"
+        unique_id: econet24_proxy_circuit2_temp
+        icon: mdi:thermometer
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_circuit_2_temperature') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_circuit_2_temperature') not in ['unknown', 'unavailable'] }}
+
+      - name: "Circuit 3 Temperature"
+        unique_id: econet24_proxy_circuit3_temp
+        icon: mdi:thermometer
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_circuit_3_temperature') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_circuit_3_temperature') not in ['unknown', 'unavailable'] }}
+
+  # ---------------------------------------------------------------------------
+  # System Info
+  # ---------------------------------------------------------------------------
+      - name: "Econet24 WiFi Quality"
+        unique_id: econet24_proxy_wifi_quality
+        icon: mdi:wifi
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_wifi_quality') }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_wifi_quality') not in ['unknown', 'unavailable'] }}
+
+  # ---------------------------------------------------------------------------
+  # Calculated Sensors
+  # ---------------------------------------------------------------------------
+      # Delta T (Flow - Return) - useful for efficiency monitoring
+      - name: "Heat Pump Delta T"
+        unique_id: econet24_proxy_delta_t
+        icon: mdi:delta
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {% set flow = states('sensor.econet24_' ~ prefix ~ '_heat_pump_flow_temperature') | float(0) %}
+          {% set ret = states('sensor.econet24_' ~ prefix ~ '_heat_pump_return_temperature') | float(0) %}
+          {{ (flow - ret) | round(1) }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_heat_pump_flow_temperature') not in ['unknown', 'unavailable'] }}
+
+  # ---------------------------------------------------------------------------
+  # Binary Sensors
+  # ---------------------------------------------------------------------------
+  - binary_sensor:
+      - name: "Heat Pump Running"
+        unique_id: econet24_proxy_running
+        icon: mdi:heat-pump
+        device_class: running
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {% set state = states('sensor.econet24_' ~ prefix ~ '_heat_pump_work_state') | int(0) %}
+          {{ state > 0 }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_heat_pump_work_state') not in ['unknown', 'unavailable'] }}
+
+      - name: "Compressor Running"
+        unique_id: econet24_proxy_compressor_running
+        icon: mdi:sine-wave
+        device_class: running
+        state: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {% set freq = states('sensor.econet24_' ~ prefix ~ '_compressor_frequency') | int(0) %}
+          {{ freq > 0 }}
+        availability: >
+          {% set prefix = states('input_text.econet24_device_prefix') %}
+          {{ states('sensor.econet24_' ~ prefix ~ '_compressor_frequency') not in ['unknown', 'unavailable'] }}
