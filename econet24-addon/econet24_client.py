@@ -257,6 +257,69 @@ class Econet24Client:
         response.raise_for_status()
         return response.json()
 
+    def get_editable_params(self, uid: str = None) -> dict:
+        """
+        Get editable device parameters (setpoints, schedules, etc).
+
+        This endpoint returns parameters that can be modified by the user,
+        including calculated setpoints, circuit configurations, etc.
+
+        Args:
+            uid: Device UID (uses first device if not specified)
+
+        Returns:
+            Dict containing editable parameters
+        """
+        self._ensure_logged_in()
+        if uid is None:
+            if not self._devices:
+                raise Econet24Error("No devices available")
+            uid = self._devices[0]
+
+        response = self._get(f"/service/getDeviceEditableParams?uid={uid}")
+        response.raise_for_status()
+        return response.json()
+
+    def get_reg_params(self, uid: str = None) -> dict:
+        """
+        Get registration/configuration parameters.
+
+        Args:
+            uid: Device UID (uses first device if not specified)
+
+        Returns:
+            Dict containing registration parameters
+        """
+        self._ensure_logged_in()
+        if uid is None:
+            if not self._devices:
+                raise Econet24Error("No devices available")
+            uid = self._devices[0]
+
+        response = self._get(f"/service/getRegParams?uid={uid}")
+        response.raise_for_status()
+        return response.json()
+
+    def get_sys_params(self, uid: str = None) -> dict:
+        """
+        Get system parameters.
+
+        Args:
+            uid: Device UID (uses first device if not specified)
+
+        Returns:
+            Dict containing system parameters
+        """
+        self._ensure_logged_in()
+        if uid is None:
+            if not self._devices:
+                raise Econet24Error("No devices available")
+            uid = self._devices[0]
+
+        response = self._get(f"/service/getSysParams?uid={uid}")
+        response.raise_for_status()
+        return response.json()
+
     def get_current_values(self, uid: str = None) -> dict:
         """
         Get just the current sensor values (convenience method).

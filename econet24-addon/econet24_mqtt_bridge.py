@@ -43,249 +43,192 @@ logger = logging.getLogger("econet24")
 logging.getLogger("econet24_client").setLevel(getattr(logging, log_level, logging.INFO))
 
 # Sensor definitions with HA device classes and units
+# Covers Grant/ecoMAX heat pumps and common econet24 parameter names
 SENSOR_DEFINITIONS = {
-    # Grant heat pump sensors
-    "GrantOutgoingTemp": {
-        "name": "Heat Pump Flow Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer"
-    },
-    "GrantReturnTemp": {
-        "name": "Heat Pump Return Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer"
-    },
-    "GrantOutdoorTemp": {
-        "name": "Heat Pump Outdoor Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer"
-    },
-    "GrantCompressorFreq": {
-        "name": "Compressor Frequency",
-        "device_class": None,
-        "unit": "Hz",
-        "icon": "mdi:sine-wave"
-    },
-    "GrantPumpSpeed": {
-        "name": "Pump Speed",
-        "device_class": None,
-        "unit": "RPM",
-        "icon": "mdi:pump"
-    },
-    "GrantWorkState": {
-        "name": "Heat Pump Work State",
-        "device_class": None,
-        "unit": None,
-        "icon": "mdi:heat-pump"
-    },
-    # Temperature sensors
-    "TempWthr": {
-        "name": "Weather Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:weather-partly-cloudy"
-    },
-    "TempCWU": {
-        "name": "Hot Water Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:water-boiler"
-    },
-    "TempBuforUp": {
-        "name": "Buffer Tank Top Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:storage-tank"
-    },
-    "TempBuforDown": {
-        "name": "Buffer Tank Bottom Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:storage-tank"
-    },
-    "TempClutch": {
-        "name": "Clutch Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer"
-    },
-    "TempCircuit2": {
-        "name": "Circuit 2 Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer"
-    },
-    "TempCircuit3": {
-        "name": "Circuit 3 Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer"
-    },
-    "HeatSourceCalcPresetTemp": {
-        "name": "Calculated Preset Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer-auto"
-    },
-    # Flow rate
-    "Flow": {
-        "name": "Current Flow Rate",
-        "device_class": None,
-        "unit": "L/min",
-        "icon": "mdi:water-pump"
-    },
-    "WaterFlow": {
-        "name": "Water Flow Rate",
-        "device_class": None,
-        "unit": "L/min",
-        "icon": "mdi:water-pump"
-    },
-    "GrantFlow": {
-        "name": "Heat Pump Flow Rate",
-        "device_class": None,
-        "unit": "L/min",
-        "icon": "mdi:water-pump"
-    },
-    # Setpoints / Calculated temperatures
-    "Circuit1SetTemp": {
-        "name": "Circuit 1 Setpoint",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer-check"
-    },
-    "Circuit2SetTemp": {
-        "name": "Circuit 2 Setpoint",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer-check"
-    },
-    "C1CalcTemp": {
-        "name": "Circuit 1 Calculated Setpoint",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer-auto"
-    },
-    "C2CalcTemp": {
-        "name": "Circuit 2 Calculated Setpoint",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer-auto"
-    },
-    "TempSetCircuit1": {
-        "name": "Circuit 1 Target Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer-check"
-    },
-    "TempSetCircuit2": {
-        "name": "Circuit 2 Target Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer-check"
-    },
-    "CalcTempCircuit1": {
-        "name": "Circuit 1 Calculated Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer-auto"
-    },
-    "CalcTempCircuit2": {
-        "name": "Circuit 2 Calculated Temperature",
-        "device_class": "temperature",
-        "unit": "°C",
-        "icon": "mdi:thermometer-auto"
-    },
-    # Power / Energy
-    "Power": {
-        "name": "Current Power",
-        "device_class": "power",
-        "unit": "W",
-        "icon": "mdi:flash"
-    },
-    "ElecPower": {
-        "name": "Electrical Power",
-        "device_class": "power",
-        "unit": "W",
-        "icon": "mdi:flash"
-    },
-    "CurrentPower": {
-        "name": "Current Power Usage",
-        "device_class": "power",
-        "unit": "W",
-        "icon": "mdi:flash"
-    },
-    "GrantPower": {
-        "name": "Heat Pump Power",
-        "device_class": "power",
-        "unit": "W",
-        "icon": "mdi:flash"
-    },
-    "EnergyTotal": {
-        "name": "Total Energy",
-        "device_class": "energy",
-        "unit": "kWh",
-        "icon": "mdi:lightning-bolt"
-    },
-    "EnergyToday": {
-        "name": "Energy Today",
-        "device_class": "energy",
-        "unit": "kWh",
-        "icon": "mdi:lightning-bolt"
-    },
-    # Heat demand
-    "HeatDemand": {
-        "name": "Heat Demand",
-        "device_class": None,
-        "unit": "%",
-        "icon": "mdi:fire"
-    },
-    "Demand": {
-        "name": "Heating Demand",
-        "device_class": None,
-        "unit": "%",
-        "icon": "mdi:fire"
-    },
-    "DemandForHeat": {
-        "name": "Demand for Heat",
-        "device_class": None,
-        "unit": None,
-        "icon": "mdi:fire"
-    },
-    "HeatingDemand": {
-        "name": "Heating Demand",
-        "device_class": None,
-        "unit": "%",
-        "icon": "mdi:fire"
-    },
-    # Pressure
-    "Pressure": {
-        "name": "System Pressure",
-        "device_class": "pressure",
-        "unit": "bar",
-        "icon": "mdi:gauge"
-    },
-    "WaterPressure": {
-        "name": "Water Pressure",
-        "device_class": "pressure",
-        "unit": "bar",
-        "icon": "mdi:gauge"
-    },
-    # WiFi
-    "wifiQuality": {
-        "name": "WiFi Quality",
-        "device_class": None,
-        "unit": "%",
-        "icon": "mdi:wifi"
-    },
-    "wifiStrength": {
-        "name": "WiFi Signal Strength",
-        "device_class": "signal_strength",
-        "unit": "dBm",
-        "icon": "mdi:wifi"
-    },
+    # ===== GRANT HEAT PUMP SPECIFIC =====
+    "GrantOutgoingTemp": {"name": "Heat Pump Flow Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "GrantReturnTemp": {"name": "Heat Pump Return Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "GrantOutdoorTemp": {"name": "Heat Pump Outdoor Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "GrantCompressorFreq": {"name": "Compressor Frequency", "device_class": None, "unit": "Hz", "icon": "mdi:sine-wave"},
+    "GrantPumpSpeed": {"name": "Pump Speed", "device_class": None, "unit": "RPM", "icon": "mdi:pump"},
+    "GrantWorkState": {"name": "Heat Pump Work State", "device_class": None, "unit": None, "icon": "mdi:heat-pump"},
+    "GrantFlow": {"name": "Heat Pump Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump"},
+    "GrantPower": {"name": "Heat Pump Power", "device_class": "power", "unit": "W", "icon": "mdi:flash"},
+    "GrantCOP": {"name": "Coefficient of Performance", "device_class": None, "unit": None, "icon": "mdi:chart-line"},
+
+    # ===== TEMPERATURE SENSORS =====
+    "TempWthr": {"name": "Weather Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:weather-partly-cloudy"},
+    "TempCWU": {"name": "Hot Water Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:water-boiler"},
+    "TempBuforUp": {"name": "Buffer Tank Top Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:storage-tank"},
+    "TempBuforDown": {"name": "Buffer Tank Bottom Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:storage-tank"},
+    "TempClutch": {"name": "Clutch Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempCircuit1": {"name": "Circuit 1 Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempCircuit2": {"name": "Circuit 2 Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempCircuit3": {"name": "Circuit 3 Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempFeeder": {"name": "Feeder Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempExhaust": {"name": "Exhaust Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempRoom": {"name": "Room Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:home-thermometer"},
+    "TempOutdoor": {"name": "Outdoor Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempReturn": {"name": "Return Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempSupply": {"name": "Supply Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempFlue": {"name": "Flue Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "TempBoiler": {"name": "Boiler Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    # Polish temperature names
+    "tempZasilanie": {"name": "Supply Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "tempPowrot": {"name": "Return Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "tempZewn": {"name": "Outdoor Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "tempPokojowa": {"name": "Room Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:home-thermometer"},
+    "tempCWU": {"name": "Hot Water Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:water-boiler"},
+    "tempBuforGora": {"name": "Buffer Top Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:storage-tank"},
+    "tempBuforDol": {"name": "Buffer Bottom Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:storage-tank"},
+
+    # ===== CALCULATED SETPOINTS / TARGET TEMPERATURES =====
+    "HeatSourceCalcPresetTemp": {"name": "Calculated Heating Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+    "Circuit1SetTemp": {"name": "Circuit 1 Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit2SetTemp": {"name": "Circuit 2 Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "C1CalcTemp": {"name": "Circuit 1 Calculated Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+    "C2CalcTemp": {"name": "Circuit 2 Calculated Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+    "TempSetCircuit1": {"name": "Circuit 1 Target Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "TempSetCircuit2": {"name": "Circuit 2 Target Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "CalcTempCircuit1": {"name": "Circuit 1 Calculated Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+    "CalcTempCircuit2": {"name": "Circuit 2 Calculated Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+    "SetTempCO": {"name": "Heating Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "SetTempCWU": {"name": "Hot Water Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "CalcSetTempCO": {"name": "Calculated Heating Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+    "CalcSetTempCWU": {"name": "Calculated Hot Water Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+    # Editable params setpoints (from getDeviceEditableParams)
+    "HDWTSetPoint": {"name": "Hot Water Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "BuforsetPoint": {"name": "Buffer Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit1ComfortTemp": {"name": "Circuit 1 Comfort Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit1EcoTemp": {"name": "Circuit 1 Eco Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit1BaseTemp": {"name": "Circuit 1 Base Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit2ComfortTemp": {"name": "Circuit 2 Comfort Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit2EcoTemp": {"name": "Circuit 2 Eco Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit2BaseTemp": {"name": "Circuit 2 Base Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit3ComfortTemp": {"name": "Circuit 3 Comfort Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit3EcoTemp": {"name": "Circuit 3 Eco Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit3BaseTemp": {"name": "Circuit 3 Base Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "Circuit1WorkState": {"name": "Circuit 1 Work State", "device_class": None, "unit": None, "icon": "mdi:radiator"},
+    "Circuit2WorkState": {"name": "Circuit 2 Work State", "device_class": None, "unit": None, "icon": "mdi:radiator"},
+    "Circuit3WorkState": {"name": "Circuit 3 Work State", "device_class": None, "unit": None, "icon": "mdi:radiator"},
+    "Circuit1CurveRadiator": {"name": "Circuit 1 Heating Curve", "device_class": None, "unit": None, "icon": "mdi:chart-line"},
+    "Circuit2CurveFloor": {"name": "Circuit 2 Heating Curve", "device_class": None, "unit": None, "icon": "mdi:chart-line"},
+    "HeatingCooling": {"name": "Heating/Cooling Mode", "device_class": None, "unit": None, "icon": "mdi:hvac"},
+    "SummerOn": {"name": "Summer Mode On Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:weather-sunny"},
+    "SummerOff": {"name": "Summer Mode Off Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:weather-sunny"},
+    # Thermostat temps from curr
+    "Circuit1thermostat": {"name": "Circuit 1 Thermostat", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermostat"},
+    "Circuit2thermostatTemp": {"name": "Circuit 2 Thermostat", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermostat"},
+    "Circuit3thermostatTemp": {"name": "Circuit 3 Thermostat", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermostat"},
+    "Circuit4thermostatTemp": {"name": "Circuit 4 Thermostat", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermostat"},
+    "Circuit5thermostatTemp": {"name": "Circuit 5 Thermostat", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermostat"},
+    "Circuit6thermostatTemp": {"name": "Circuit 6 Thermostat", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermostat"},
+    "Circuit7thermostatTemp": {"name": "Circuit 7 Thermostat", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermostat"},
+    # Polish setpoint names
+    "tempZadanaCO": {"name": "Heating Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "tempZadanaCWU": {"name": "Hot Water Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "tempWyliczonaCO": {"name": "Calculated Heating Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+    "tempWyliczonaObieg1": {"name": "Circuit 1 Calculated Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+    "tempWyliczonaObieg2": {"name": "Circuit 2 Calculated Setpoint", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-auto"},
+
+    # ===== FLOW RATE =====
+    "Flow": {"name": "Current Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump"},
+    "WaterFlow": {"name": "Water Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump"},
+    "FlowRate": {"name": "Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump"},
+    "przepyw": {"name": "Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump"},
+    "przeplyw": {"name": "Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump"},
+
+    # ===== POWER / ENERGY =====
+    "Power": {"name": "Current Power", "device_class": "power", "unit": "W", "icon": "mdi:flash"},
+    "ElecPower": {"name": "Electrical Power", "device_class": "power", "unit": "W", "icon": "mdi:flash"},
+    "CurrentPower": {"name": "Current Power Usage", "device_class": "power", "unit": "W", "icon": "mdi:flash"},
+    "HeatingPower": {"name": "Heating Power", "device_class": "power", "unit": "kW", "icon": "mdi:flash"},
+    "ThermalPower": {"name": "Thermal Power", "device_class": "power", "unit": "kW", "icon": "mdi:fire"},
+    "EnergyTotal": {"name": "Total Energy", "device_class": "energy", "unit": "kWh", "icon": "mdi:lightning-bolt"},
+    "EnergyToday": {"name": "Energy Today", "device_class": "energy", "unit": "kWh", "icon": "mdi:lightning-bolt"},
+    "EnergyYesterday": {"name": "Energy Yesterday", "device_class": "energy", "unit": "kWh", "icon": "mdi:lightning-bolt"},
+    "EnergyMonth": {"name": "Energy This Month", "device_class": "energy", "unit": "kWh", "icon": "mdi:lightning-bolt"},
+    "COP": {"name": "Coefficient of Performance", "device_class": None, "unit": None, "icon": "mdi:chart-line"},
+    # Polish power names
+    "moc": {"name": "Power", "device_class": "power", "unit": "W", "icon": "mdi:flash"},
+    "mocGrzania": {"name": "Heating Power", "device_class": "power", "unit": "kW", "icon": "mdi:fire"},
+    "energiaZuzycie": {"name": "Energy Consumption", "device_class": "energy", "unit": "kWh", "icon": "mdi:lightning-bolt"},
+
+    # ===== HEAT DEMAND =====
+    "HeatDemand": {"name": "Heat Demand", "device_class": None, "unit": "%", "icon": "mdi:fire"},
+    "Demand": {"name": "Heating Demand", "device_class": None, "unit": "%", "icon": "mdi:fire"},
+    "DemandForHeat": {"name": "Demand for Heat", "device_class": None, "unit": None, "icon": "mdi:fire"},
+    "HeatingDemand": {"name": "Heating Demand", "device_class": None, "unit": "%", "icon": "mdi:fire"},
+    "DemandCH": {"name": "Central Heating Demand", "device_class": None, "unit": "%", "icon": "mdi:fire"},
+    "DemandCWU": {"name": "Hot Water Demand", "device_class": None, "unit": "%", "icon": "mdi:water-boiler"},
+    "ModulationLevel": {"name": "Modulation Level", "device_class": None, "unit": "%", "icon": "mdi:percent"},
+    # Polish demand names
+    "zapotrzebowanie": {"name": "Heat Demand", "device_class": None, "unit": "%", "icon": "mdi:fire"},
+    "zapotrzebowanieCO": {"name": "Heating Demand", "device_class": None, "unit": "%", "icon": "mdi:fire"},
+    "zapotrzebowanieCWU": {"name": "Hot Water Demand", "device_class": None, "unit": "%", "icon": "mdi:water-boiler"},
+
+    # ===== PRESSURE =====
+    "Pressure": {"name": "System Pressure", "device_class": "pressure", "unit": "bar", "icon": "mdi:gauge"},
+    "WaterPressure": {"name": "Water Pressure", "device_class": "pressure", "unit": "bar", "icon": "mdi:gauge"},
+    "SystemPressure": {"name": "System Pressure", "device_class": "pressure", "unit": "bar", "icon": "mdi:gauge"},
+    "cisnienie": {"name": "Pressure", "device_class": "pressure", "unit": "bar", "icon": "mdi:gauge"},
+
+    # ===== PUMPS & ACTUATORS =====
+    "PumpCH": {"name": "Central Heating Pump", "device_class": None, "unit": None, "icon": "mdi:pump"},
+    "PumpCWU": {"name": "Hot Water Pump", "device_class": None, "unit": None, "icon": "mdi:pump"},
+    "PumpCirc": {"name": "Circulation Pump", "device_class": None, "unit": None, "icon": "mdi:pump"},
+    "PumpCircuit1": {"name": "Circuit 1 Pump", "device_class": None, "unit": None, "icon": "mdi:pump"},
+    "PumpCircuit2": {"name": "Circuit 2 Pump", "device_class": None, "unit": None, "icon": "mdi:pump"},
+    "Valve3Way": {"name": "3-Way Valve Position", "device_class": None, "unit": "%", "icon": "mdi:valve"},
+    "MixerPosition": {"name": "Mixer Position", "device_class": None, "unit": "%", "icon": "mdi:valve"},
+    # Polish pump names
+    "pompaCO": {"name": "Central Heating Pump", "device_class": None, "unit": None, "icon": "mdi:pump"},
+    "pompaCWU": {"name": "Hot Water Pump", "device_class": None, "unit": None, "icon": "mdi:pump"},
+    "pompaObieg1": {"name": "Circuit 1 Pump", "device_class": None, "unit": None, "icon": "mdi:pump"},
+    "pompaObieg2": {"name": "Circuit 2 Pump", "device_class": None, "unit": None, "icon": "mdi:pump"},
+    "zawor3drogowy": {"name": "3-Way Valve", "device_class": None, "unit": "%", "icon": "mdi:valve"},
+    "mieszacz": {"name": "Mixer Position", "device_class": None, "unit": "%", "icon": "mdi:valve"},
+
+    # ===== FAN / BLOWER =====
+    "FanSpeed": {"name": "Fan Speed", "device_class": None, "unit": "%", "icon": "mdi:fan"},
+    "FanPower": {"name": "Fan Power", "device_class": None, "unit": "%", "icon": "mdi:fan"},
+    "BlowerSpeed": {"name": "Blower Speed", "device_class": None, "unit": "RPM", "icon": "mdi:fan"},
+    "wentylator": {"name": "Fan Speed", "device_class": None, "unit": "%", "icon": "mdi:fan"},
+    "dmuchawa": {"name": "Blower Speed", "device_class": None, "unit": "%", "icon": "mdi:fan"},
+
+    # ===== FUEL / CONSUMPTION =====
+    "FuelLevel": {"name": "Fuel Level", "device_class": None, "unit": "%", "icon": "mdi:gas-station"},
+    "FuelConsumption": {"name": "Fuel Consumption", "device_class": None, "unit": "kg/h", "icon": "mdi:fire"},
+    "FuelTotal": {"name": "Total Fuel Used", "device_class": None, "unit": "kg", "icon": "mdi:counter"},
+    "FeederWork": {"name": "Feeder Work Time", "device_class": "duration", "unit": "s", "icon": "mdi:clock"},
+    # Polish fuel names
+    "poziomPaliwa": {"name": "Fuel Level", "device_class": None, "unit": "%", "icon": "mdi:gas-station"},
+    "zuzyciePaliwa": {"name": "Fuel Consumption", "device_class": None, "unit": "kg/h", "icon": "mdi:fire"},
+    "podajnik": {"name": "Feeder Work Time", "device_class": "duration", "unit": "s", "icon": "mdi:clock"},
+
+    # ===== STATUS / STATE =====
+    "WorkMode": {"name": "Work Mode", "device_class": None, "unit": None, "icon": "mdi:state-machine"},
+    "OperatingMode": {"name": "Operating Mode", "device_class": None, "unit": None, "icon": "mdi:state-machine"},
+    "State": {"name": "System State", "device_class": None, "unit": None, "icon": "mdi:state-machine"},
+    "HeaterState": {"name": "Heater State", "device_class": None, "unit": None, "icon": "mdi:fire"},
+    "AlarmState": {"name": "Alarm State", "device_class": None, "unit": None, "icon": "mdi:alert"},
+    "ErrorCode": {"name": "Error Code", "device_class": None, "unit": None, "icon": "mdi:alert-circle"},
+    # Polish state names
+    "trybPracy": {"name": "Work Mode", "device_class": None, "unit": None, "icon": "mdi:state-machine"},
+    "stanPracy": {"name": "Operating State", "device_class": None, "unit": None, "icon": "mdi:state-machine"},
+    "alarm": {"name": "Alarm State", "device_class": None, "unit": None, "icon": "mdi:alert"},
+
+    # ===== RUNTIME / STATISTICS =====
+    "RuntimeTotal": {"name": "Total Runtime", "device_class": "duration", "unit": "h", "icon": "mdi:clock"},
+    "RuntimeToday": {"name": "Runtime Today", "device_class": "duration", "unit": "h", "icon": "mdi:clock"},
+    "CompressorStarts": {"name": "Compressor Starts", "device_class": None, "unit": None, "icon": "mdi:counter"},
+    "BurnerStarts": {"name": "Burner Starts", "device_class": None, "unit": None, "icon": "mdi:counter"},
+    "czasPracyCalkowity": {"name": "Total Runtime", "device_class": "duration", "unit": "h", "icon": "mdi:clock"},
+    "iloscZapalania": {"name": "Ignition Count", "device_class": None, "unit": None, "icon": "mdi:counter"},
+
+    # ===== WIFI / CONNECTIVITY =====
+    "wifiQuality": {"name": "WiFi Quality", "device_class": None, "unit": "%", "icon": "mdi:wifi"},
+    "wifiStrength": {"name": "WiFi Signal Strength", "device_class": "signal_strength", "unit": "dBm", "icon": "mdi:wifi"},
 }
 
 
@@ -477,7 +420,7 @@ class Econet24MQTTBridge:
             for device_uid in self.econet_client.devices:
                 logger.debug(f"[ECONET] Polling device {device_uid}...")
 
-                # Fetch data from econet24
+                # Fetch current data from econet24
                 params = self.econet_client.get_device_params(device_uid)
                 curr = params.get("curr", {})
 
@@ -506,6 +449,10 @@ class Econet24MQTTBridge:
                         logger.debug(f"[ECONET] Skipping {key} (value=999.0, sensor not connected)")
                         continue
 
+                    # Skip null values
+                    if value is None:
+                        continue
+
                     # Publish discovery if we have a definition
                     if key in SENSOR_DEFINITIONS:
                         self._publish_ha_discovery(device_uid, key, SENSOR_DEFINITIONS[key])
@@ -521,6 +468,38 @@ class Econet24MQTTBridge:
 
                     self._publish_sensor_value(device_uid, key, value)
                     published_count += 1
+
+                # Fetch and publish editable params (setpoints, etc.)
+                try:
+                    editable = self.econet_client.get_editable_params(device_uid)
+                    editable_data = editable.get("data", {})
+                    editable_count = 0
+
+                    # Parameters we want to expose from editable params
+                    wanted_editable = [
+                        "HDWTSetPoint", "BuforsetPoint",
+                        "Circuit1ComfortTemp", "Circuit1EcoTemp", "Circuit1BaseTemp", "Circuit1WorkState",
+                        "Circuit2ComfortTemp", "Circuit2EcoTemp", "Circuit2BaseTemp", "Circuit2WorkState",
+                        "Circuit3ComfortTemp", "Circuit3EcoTemp", "Circuit3BaseTemp", "Circuit3WorkState",
+                        "Circuit1CurveRadiator", "Circuit2CurveFloor",
+                        "HeatingCooling", "SummerOn", "SummerOff",
+                    ]
+
+                    for param_id, param_data in editable_data.items():
+                        param_name = param_data.get("name")
+                        if param_name in wanted_editable:
+                            value = param_data.get("value")
+                            if value is not None:
+                                if param_name in SENSOR_DEFINITIONS:
+                                    self._publish_ha_discovery(device_uid, param_name, SENSOR_DEFINITIONS[param_name])
+                                self._publish_sensor_value(device_uid, param_name, value)
+                                editable_count += 1
+
+                    if editable_count > 0:
+                        logger.info(f"[MQTT] Published {editable_count} setpoint values to MQTT")
+
+                except Exception as e:
+                    logger.debug(f"[ECONET] Could not fetch editable params: {e}")
 
                 logger.info(f"[MQTT] Published {published_count} sensor values to MQTT")
 
