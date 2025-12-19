@@ -320,6 +320,53 @@ class Econet24Client:
         response.raise_for_status()
         return response.json()
 
+    def get_parm_v2(self, uid: str = None) -> dict:
+        """
+        Get raw parameter data from the v2 API endpoint.
+
+        This endpoint returns more detailed data including the 'p.pro' object
+        with hex-keyed raw values that may include additional sensors like
+        flow rate, fan speed, and power that aren't in the standard endpoint.
+
+        Args:
+            uid: Device UID (uses first device if not specified)
+
+        Returns:
+            Dict containing raw parameter data including 'p' object with 'pro' subobject
+        """
+        self._ensure_logged_in()
+        if uid is None:
+            if not self._devices:
+                raise Econet24Error("No devices available")
+            uid = self._devices[0]
+
+        response = self._get(f"/aweb/d/parm/v2/getParm?uid={uid}")
+        response.raise_for_status()
+        return response.json()
+
+    def get_defs_v2(self, uid: str = None) -> dict:
+        """
+        Get parameter definitions from the v2 API endpoint.
+
+        This endpoint returns parameter descriptions and metadata that can help
+        decode the hex-keyed values from get_parm_v2().
+
+        Args:
+            uid: Device UID (uses first device if not specified)
+
+        Returns:
+            Dict containing parameter definitions
+        """
+        self._ensure_logged_in()
+        if uid is None:
+            if not self._devices:
+                raise Econet24Error("No devices available")
+            uid = self._devices[0]
+
+        response = self._get(f"/aweb/f/cfg/v2/getDefs?uid={uid}")
+        response.raise_for_status()
+        return response.json()
+
     def get_current_values(self, uid: str = None) -> dict:
         """
         Get just the current sensor values (convenience method).

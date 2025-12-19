@@ -127,9 +127,40 @@ def main():
         except Exception as e:
             print(f"    ERROR: {e}")
 
+        # Query v2 API endpoints (new web UI data)
+        print("\n" + "=" * 60)
+        print("[7] getParm v2 - Raw parameter data (hex keys)")
+        print("=" * 60)
+        try:
+            parm_v2 = client.get_parm_v2(uid)
+            print(f"\nTop-level keys: {list(parm_v2.keys())}")
+            if "p" in parm_v2:
+                p_keys = list(parm_v2["p"].keys()) if isinstance(parm_v2["p"], dict) else "not dict"
+                print(f"p keys: {p_keys}")
+                if isinstance(parm_v2["p"], dict) and "pro" in parm_v2["p"]:
+                    pro = parm_v2["p"]["pro"]
+                    print(f"\np.pro has {len(pro)} hex-keyed values:")
+                    for key in sorted(pro.keys(), key=lambda x: int(x, 16) if x.isalnum() else 0)[:30]:
+                        print(f"  {key}: {pro[key]}")
+                    if len(pro) > 30:
+                        print(f"  ... and {len(pro) - 30} more")
+        except Exception as e:
+            print(f"    ERROR: {e}")
+
+        print("\n" + "=" * 60)
+        print("[8] getDefs v2 - Parameter definitions")
+        print("=" * 60)
+        try:
+            defs_v2 = client.get_defs_v2(uid)
+            print(f"\nTop-level keys: {list(defs_v2.keys())}")
+            print("\nFull response (first 5000 chars):")
+            print(json.dumps(defs_v2, indent=2, default=str)[:5000])
+        except Exception as e:
+            print(f"    ERROR: {e}")
+
         # Save full dump to file
         print("\n" + "=" * 60)
-        print("[7] Saving full JSON dump to econet24_params_dump.json")
+        print("[9] Saving full JSON dump to econet24_params_dump.json")
         print("=" * 60)
 
         full_dump = {
@@ -138,6 +169,8 @@ def main():
             "editable_params": None,
             "reg_params": None,
             "sys_params": None,
+            "parm_v2": None,
+            "defs_v2": None,
         }
 
         try:
@@ -154,6 +187,14 @@ def main():
             pass
         try:
             full_dump["sys_params"] = client.get_sys_params(uid)
+        except:
+            pass
+        try:
+            full_dump["parm_v2"] = client.get_parm_v2(uid)
+        except:
+            pass
+        try:
+            full_dump["defs_v2"] = client.get_defs_v2(uid)
         except:
             pass
 
