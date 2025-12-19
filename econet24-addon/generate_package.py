@@ -434,16 +434,33 @@ template:
       # Delta T (Flow - Return) - useful for efficiency monitoring
       - name: "Heat Pump Delta T"
         unique_id: econet24_proxy_delta_t
-        icon: mdi:delta
+        icon: mdi:thermometer-lines
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
         state: >
-          {{% set flow = states('sensor.econet24_{device_prefix}_heat_pump_flow_temperature') | float(0) %}}
-          {{% set ret = states('sensor.econet24_{device_prefix}_heat_pump_return_temperature') | float(0) %}}
-          {{{{ (flow - ret) | round(1) }}}}
+          {{% set flow = states('sensor.econet24_{device_prefix}_heat_pump_flow_temperature') | float(none) %}}
+          {{% set ret = states('sensor.econet24_{device_prefix}_heat_pump_return_temperature') | float(none) %}}
+          {{% if flow is not none and ret is not none and flow > 0 and ret > 0 %}}
+            {{{{ (flow - ret) | round(1) }}}}
+          {{% else %}}
+            unknown
+          {{% endif %}}
         availability: >
-          {{{{ states('sensor.econet24_{device_prefix}_heat_pump_flow_temperature') not in ['unknown', 'unavailable'] }}}}
+          {{{{ states('sensor.econet24_{device_prefix}_heat_pump_flow_temperature') not in ['unknown', 'unavailable']
+             and states('sensor.econet24_{device_prefix}_heat_pump_return_temperature') not in ['unknown', 'unavailable'] }}}}
+
+      # Calculated Heating Setpoint (what the heat pump is targeting)
+      - name: "Heat Pump Target Temperature"
+        unique_id: econet24_proxy_target_temp
+        icon: mdi:thermometer-auto
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {{{{ states('sensor.econet24_{device_prefix}_calculated_heating_setpoint') }}}}
+        availability: >
+          {{{{ states('sensor.econet24_{device_prefix}_calculated_heating_setpoint') not in ['unknown', 'unavailable'] }}}}
 
   # ---------------------------------------------------------------------------
   # Binary Sensors
