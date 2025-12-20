@@ -246,6 +246,7 @@ SENSOR_DEFINITIONS = {
 
     # ===== CALCULATED SENSORS =====
     "calc_delta_t": {"name": "Delta T (Flow - Return)", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-lines"},
+    "calc_heating_active": {"name": "Heating Active", "device_class": None, "unit": None, "icon": "mdi:fire"},
 }
 
 # Mapping from informationParams numeric keys to sensor keys
@@ -434,6 +435,37 @@ class Econet24MQTTBridge:
         logger.debug(f"[MQTT] Discovery topic: {discovery_topic}")
         self._discovery_published.add(sensor_key)
 
+    def _extract_info_param_value(self, info_params: dict, key: str):
+        """Extract a value from informationParams structure.
+
+        Structure: {key: [visible_bool, [[value, unit_id, ???]]]}
+        Returns the value or None if not found/not visible.
+        """
+        try:
+            info_data = info_params.get(key)
+            if not info_data or not isinstance(info_data, list) or len(info_data) < 2:
+                return None
+
+            is_visible = info_data[0]
+            if not is_visible:
+                return None
+
+            value_array = info_data[1]
+            if isinstance(value_array, list) and len(value_array) > 0:
+                inner = value_array[0]
+                if isinstance(inner, list) and len(inner) > 0:
+                    value = inner[0]
+                    # Convert string numbers to float
+                    if isinstance(value, str):
+                        try:
+                            value = float(value)
+                        except ValueError:
+                            pass
+                    return value
+        except (IndexError, TypeError):
+            pass
+        return None
+
     def _publish_sensor_value(self, device_uid: str, sensor_key: str, value: Any):
         """Publish a sensor value to MQTT."""
         topic = f"{self.topic_prefix}/{device_uid}/{sensor_key}"
@@ -579,6 +611,15 @@ class Econet24MQTTBridge:
 
                     if info_count > 0:
                         logger.info(f"[MQTT] Published {info_count} information params (flow, power, etc.) to MQTT")
+
+                    # Calculate heating active state based on compressor frequency
+                    # Compressor Hz > 0 means heat pump is actively delivering heat
+                    compressor_hz = self._extract_info_param_value(info_params, "21")
+                    if compressor_hz is not None:
+                        heating_active = 1 if compressor_hz > 0 else 0
+                        self._publish_ha_discovery(device_uid, "calc_heating_active", SENSOR_DEFINITIONS["calc_heating_active"])
+                        self._publish_sensor_value(device_uid, "calc_heating_active", heating_active)
+                        logger.debug(f"[CALC] Heating Active = {heating_active} (compressor: {compressor_hz} Hz)")
 
                 except Exception as e:
                     logger.debug(f"[ECONET] Could not fetch editable params: {e}")
