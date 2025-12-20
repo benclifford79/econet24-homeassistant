@@ -243,6 +243,9 @@ SENSOR_DEFINITIONS = {
     "info_outdoor_temp": {"name": "Outdoor Temperature (HP)", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
     "info_hp_flow_temp": {"name": "Heat Pump Flow Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
     "info_cop": {"name": "Current COP", "device_class": None, "unit": None, "icon": "mdi:chart-line"},
+
+    # ===== CALCULATED SENSORS =====
+    "calc_delta_t": {"name": "Delta T (Flow - Return)", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-lines"},
 }
 
 # Mapping from informationParams numeric keys to sensor keys
@@ -496,6 +499,16 @@ class Econet24MQTTBridge:
 
                     self._publish_sensor_value(device_uid, key, value)
                     published_count += 1
+
+                # Calculate and publish Delta T (Flow - Return temperature)
+                flow_temp = curr.get("GrantOutgoingTemp")
+                return_temp = curr.get("GrantReturnTemp")
+                if (flow_temp is not None and return_temp is not None and
+                    flow_temp != 999.0 and return_temp != 999.0):
+                    delta_t = round(flow_temp - return_temp, 1)
+                    self._publish_ha_discovery(device_uid, "calc_delta_t", SENSOR_DEFINITIONS["calc_delta_t"])
+                    self._publish_sensor_value(device_uid, "calc_delta_t", delta_t)
+                    logger.debug(f"[CALC] Delta T = {flow_temp} - {return_temp} = {delta_t}°C")
 
                 # Fetch and publish editable params (setpoints, etc.)
                 try:
