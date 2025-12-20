@@ -229,6 +229,34 @@ SENSOR_DEFINITIONS = {
     # ===== WIFI / CONNECTIVITY =====
     "wifiQuality": {"name": "WiFi Quality", "device_class": None, "unit": "%", "icon": "mdi:wifi"},
     "wifiStrength": {"name": "WiFi Signal Strength", "device_class": "signal_strength", "unit": "dBm", "icon": "mdi:wifi"},
+
+    # ===== INFORMATION PARAMS (from getDeviceEditableParams.informationParams) =====
+    # These use numeric keys from the API, mapped to friendly names
+    "info_compressor_hz": {"name": "Compressor Frequency", "device_class": None, "unit": "Hz", "icon": "mdi:sine-wave"},
+    "info_fan_rpm": {"name": "Fan Speed", "device_class": None, "unit": "RPM", "icon": "mdi:fan"},
+    "info_flow_rate": {"name": "Current Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump"},
+    "info_electrical_power": {"name": "Electrical Power", "device_class": "power", "unit": "kW", "icon": "mdi:flash"},
+    "info_pump_rpm": {"name": "Circulation Pump Speed", "device_class": None, "unit": "RPM", "icon": "mdi:pump"},
+    "info_energy_wh": {"name": "Heat Energy", "device_class": "energy", "unit": "Wh", "icon": "mdi:lightning-bolt"},
+    "info_hp_target_temp": {"name": "Heat Pump Target Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
+    "info_hp_return_temp": {"name": "Heat Pump Return Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "info_outdoor_temp": {"name": "Outdoor Temperature (HP)", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "info_hp_flow_temp": {"name": "Heat Pump Flow Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
+    "info_cop": {"name": "Current COP", "device_class": None, "unit": None, "icon": "mdi:chart-line"},
+}
+
+# Mapping from informationParams numeric keys to sensor keys
+# Based on analysis of getDeviceEditableParams response while heating is active
+INFORMATION_PARAMS_MAP = {
+    "21": "info_compressor_hz",      # Compressor frequency (Hz)
+    "22": "info_fan_rpm",            # Fan speed (RPM)
+    "231": "info_flow_rate",         # Current flow rate (L/min)
+    "211": "info_electrical_power",  # Electrical power (kW)
+    "26": "info_pump_rpm",           # Circulation pump speed (RPM)
+    "203": "info_energy_wh",         # Heat energy (Wh)
+    "24": "info_hp_target_temp",     # Heat pump target temperature
+    "25": "info_hp_return_temp",     # Heat pump return temperature
+    "212": "info_cop",               # COP value
 }
 
 
@@ -497,6 +525,47 @@ class Econet24MQTTBridge:
 
                     if editable_count > 0:
                         logger.info(f"[MQTT] Published {editable_count} setpoint values to MQTT")
+
+                    # Extract informationParams (flow rate, fan speed, power, etc.)
+                    # These contain real-time operational data not available in curr
+                    info_params = editable.get("informationParams", {})
+                    info_count = 0
+
+                    for info_key, info_data in info_params.items():
+                        if info_key not in INFORMATION_PARAMS_MAP:
+                            continue
+
+                        sensor_key = INFORMATION_PARAMS_MAP[info_key]
+
+                        # Structure: [visible_bool, [[value, unit_id, ???]]]
+                        try:
+                            if isinstance(info_data, list) and len(info_data) >= 2:
+                                is_visible = info_data[0]
+                                if not is_visible:
+                                    continue
+
+                                value_array = info_data[1]
+                                if isinstance(value_array, list) and len(value_array) > 0:
+                                    inner = value_array[0]
+                                    if isinstance(inner, list) and len(inner) > 0:
+                                        value = inner[0]
+                                        # Convert string numbers to float
+                                        if isinstance(value, str):
+                                            try:
+                                                value = float(value)
+                                            except ValueError:
+                                                pass
+
+                                        if sensor_key in SENSOR_DEFINITIONS:
+                                            self._publish_ha_discovery(device_uid, sensor_key, SENSOR_DEFINITIONS[sensor_key])
+                                        self._publish_sensor_value(device_uid, sensor_key, value)
+                                        info_count += 1
+                                        logger.debug(f"[INFO] {sensor_key} = {value}")
+                        except (IndexError, TypeError) as e:
+                            logger.debug(f"[INFO] Could not parse {info_key}: {e}")
+
+                    if info_count > 0:
+                        logger.info(f"[MQTT] Published {info_count} information params (flow, power, etc.) to MQTT")
 
                 except Exception as e:
                     logger.debug(f"[ECONET] Could not fetch editable params: {e}")
