@@ -1,6 +1,6 @@
 name: "Econet24 MQTT Bridge"
 description: "Bridge between econet24.com (Plum ecoMAX) and Home Assistant via MQTT"
-version: "1.6.7"
+version: "1.6.8"
 slug: "econet24_mqtt_bridge"
 init: false
 arch:

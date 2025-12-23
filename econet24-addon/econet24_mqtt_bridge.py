@@ -49,12 +49,12 @@ SENSOR_DEFINITIONS = {
     "GrantOutgoingTemp": {"name": "Heat Pump Flow Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
     "GrantReturnTemp": {"name": "Heat Pump Return Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
     "GrantOutdoorTemp": {"name": "Heat Pump Outdoor Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
-    "GrantCompressorFreq": {"name": "Compressor Frequency", "device_class": None, "unit": "Hz", "icon": "mdi:sine-wave"},
-    "GrantPumpSpeed": {"name": "Pump Speed", "device_class": None, "unit": "RPM", "icon": "mdi:pump"},
+    "GrantCompressorFreq": {"name": "Compressor Frequency", "device_class": None, "unit": "Hz", "icon": "mdi:sine-wave", "state_class": "measurement"},
+    "GrantPumpSpeed": {"name": "Pump Speed", "device_class": None, "unit": "RPM", "icon": "mdi:pump", "state_class": "measurement"},
     "GrantWorkState": {"name": "Heat Pump Work State", "device_class": None, "unit": None, "icon": "mdi:heat-pump"},
-    "GrantFlow": {"name": "Heat Pump Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump"},
+    "GrantFlow": {"name": "Heat Pump Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump", "state_class": "measurement"},
     "GrantPower": {"name": "Heat Pump Power", "device_class": "power", "unit": "W", "icon": "mdi:flash"},
-    "GrantCOP": {"name": "Coefficient of Performance", "device_class": None, "unit": None, "icon": "mdi:chart-line"},
+    "GrantCOP": {"name": "Coefficient of Performance", "device_class": None, "unit": None, "icon": "mdi:chart-line", "state_class": "measurement"},
 
     # ===== TEMPERATURE SENSORS =====
     "TempWthr": {"name": "Weather Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:weather-partly-cloudy"},
@@ -227,22 +227,22 @@ SENSOR_DEFINITIONS = {
     "iloscZapalania": {"name": "Ignition Count", "device_class": None, "unit": None, "icon": "mdi:counter"},
 
     # ===== WIFI / CONNECTIVITY =====
-    "wifiQuality": {"name": "WiFi Quality", "device_class": None, "unit": "%", "icon": "mdi:wifi"},
+    "wifiQuality": {"name": "WiFi Quality", "device_class": None, "unit": "%", "icon": "mdi:wifi", "state_class": "measurement"},
     "wifiStrength": {"name": "WiFi Signal Strength", "device_class": "signal_strength", "unit": "dBm", "icon": "mdi:wifi"},
 
     # ===== INFORMATION PARAMS (from getDeviceEditableParams.informationParams) =====
     # These use numeric keys from the API, mapped to friendly names
-    "info_compressor_hz": {"name": "Compressor Frequency", "device_class": None, "unit": "Hz", "icon": "mdi:sine-wave"},
-    "info_fan_rpm": {"name": "Fan Speed", "device_class": None, "unit": "RPM", "icon": "mdi:fan"},
-    "info_flow_rate": {"name": "Current Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump"},
+    "info_compressor_hz": {"name": "Compressor Frequency", "device_class": None, "unit": "Hz", "icon": "mdi:sine-wave", "state_class": "measurement"},
+    "info_fan_rpm": {"name": "Fan Speed", "device_class": None, "unit": "RPM", "icon": "mdi:fan", "state_class": "measurement"},
+    "info_flow_rate": {"name": "Current Flow Rate", "device_class": None, "unit": "L/min", "icon": "mdi:water-pump", "state_class": "measurement"},
     "info_electrical_power": {"name": "Electrical Power", "device_class": "power", "unit": "kW", "icon": "mdi:flash"},
-    "info_pump_rpm": {"name": "Circulation Pump Speed", "device_class": None, "unit": "RPM", "icon": "mdi:pump"},
+    "info_pump_rpm": {"name": "Circulation Pump Speed", "device_class": None, "unit": "RPM", "icon": "mdi:pump", "state_class": "measurement"},
     "info_energy_wh": {"name": "Heat Energy", "device_class": "energy", "unit": "Wh", "icon": "mdi:lightning-bolt"},
     "info_hp_target_temp": {"name": "Heat Pump Target Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-check"},
     "info_hp_return_temp": {"name": "Heat Pump Return Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
     "info_outdoor_temp": {"name": "Outdoor Temperature (HP)", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
     "info_hp_flow_temp": {"name": "Heat Pump Flow Temperature", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer"},
-    "info_cop": {"name": "Current COP", "device_class": None, "unit": None, "icon": "mdi:chart-line"},
+    "info_cop": {"name": "Current COP", "device_class": None, "unit": None, "icon": "mdi:chart-line", "state_class": "measurement"},
 
     # ===== CALCULATED SENSORS =====
     "calc_delta_t": {"name": "Delta T (Flow - Return)", "device_class": "temperature", "unit": "°C", "icon": "mdi:thermometer-lines"},
@@ -423,6 +423,15 @@ class Econet24MQTTBridge:
 
         if sensor_def.get("icon"):
             config["icon"] = sensor_def["icon"]
+
+        # Add state_class for long-term statistics and graphing
+        if sensor_def.get("state_class"):
+            config["state_class"] = sensor_def["state_class"]
+        elif sensor_def.get("device_class") in ("temperature", "power", "pressure", "signal_strength"):
+            # Default to measurement for common sensor types
+            config["state_class"] = "measurement"
+        elif sensor_def.get("device_class") == "energy":
+            config["state_class"] = "total_increasing"
 
         # Publish discovery config
         discovery_topic = f"{self.ha_discovery_prefix}/sensor/{unique_id}/config"
